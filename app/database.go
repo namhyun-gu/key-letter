@@ -2,8 +2,9 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/go-redis/redis"
 	"time"
+	
+	"github.com/go-redis/redis"
 )
 
 type Database interface {
