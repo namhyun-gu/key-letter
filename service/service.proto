@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+service KeyLetter {
+
+    rpc IssueCode (Key) returns (Code);
+
+    rpc VerifyCode (VerifyRequest) returns (VerifyReply);
+
+    rpc WaitPermit (stream WaitPermitRequest) returns (stream GuestInfo);
+
+}
+
+enum VerifyStatus {
+    FAILED = 0;
+    SUCCESS = 1;
+}
+
+enum FailedReason {
+    NONE = 0;
+    AUTH_FAILED = 1;
+    INTERNAL_ERR = 2;
+    REJECT_HOST = 3;
+    NO_HOST_WAITED = 4;
+    RESPONSE_TIMEOUT = 5;
+}
+
+message Key {
+    string value = 1;
+}
+
+message Code {
+    string value = 1;
+}
+
+message GuestInfo {
+    string ua = 1;
+    string identifier = 2;
+}
+
+message VerifyRequest {
+    GuestInfo guestInfo = 1;
+    string code = 2;
+}
+
+message VerifyReply {
+    VerifyStatus status = 1;
+    FailedReason reason = 2;
+    string key = 3;
+}
+
+message WaitPermitRequest {
+    string code = 1;
+    bool permit = 2;
+}
