@@ -31,11 +31,8 @@ func main() {
 	logger := grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
 	grpclog.SetLoggerV2(logger)
 
-	//logger := util.NewLogger()
 	config := util.GetConfig()
-	if config != nil {
-		*port = config.Port
-	} else {
+	if config == nil {
 		flag.Parse()
 		config = &util.Config{
 			Port: *port,
