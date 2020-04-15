@@ -73,4 +73,6 @@ go run main.go
 
 Namhyun, Gu – namhyun-gu@kakako.com
 
-MIT 라이센스를 준수하며 ``LICENSE``에서 자세한 정보를 확인할 수 있습니다.
+## 라이센스
+
+본 서비스는 MIT 라이센스를 준수하며 ``LICENSE``에서 자세한 정보를 확인할 수 있습니다.
