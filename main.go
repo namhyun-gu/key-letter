@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/namhyun-gu/key-letter/app"
-	"github.com/namhyun-gu/key-letter/service"
+	"github.com/namhyun-gu/key-letter/proto"
 	"github.com/namhyun-gu/key-letter/util"
 )
 
@@ -78,7 +78,7 @@ func main() {
 		util.StreamServerInterceptor(logger),
 		grpc_recovery.StreamServerInterceptor(),
 	))
-	service.RegisterKeyLetterServer(grpcServer, &app.Server{
+	proto.RegisterKeyLetterServer(grpcServer, &app.Server{
 		Config: config,
 		Database: &app.RedisDatabase{
 			Client: redisClient,

@@ -9,7 +9,7 @@ import (
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 
-	"github.com/namhyun-gu/key-letter/service"
+	"github.com/namhyun-gu/key-letter/proto"
 	"github.com/namhyun-gu/key-letter/util"
 )
 
@@ -19,7 +19,7 @@ type Server struct {
 	DatabaseChannel DatabaseChannel
 }
 
-func (server *Server) IssueCode(ctx context.Context, key *service.Key) (*service.Code, error) {
+func (server *Server) IssueCode(ctx context.Context, key *proto.Key) (*proto.Code, error) {
 	opts := server.Config.Opts
 
 	var digits otp.Digits
@@ -60,29 +60,29 @@ func (server *Server) IssueCode(ctx context.Context, key *service.Key) (*service
 	if err != nil {
 		return nil, err
 	}
-	return &service.Code{Value: code}, nil
+	return &proto.Code{Value: code}, nil
 }
 
-func (server *Server) VerifyCode(ctx context.Context, request *service.VerifyRequest) (*service.VerifyReply, error) {
+func (server *Server) VerifyCode(ctx context.Context, request *proto.VerifyRequest) (*proto.VerifyReply, error) {
 	store, err := server.Database.ReadStore(request.Code)
 	if err != nil {
-		return &service.VerifyReply{
-			Status: service.VerifyStatus_FAILED,
-			Reason: service.FailedReason_INTERNAL_ERR,
+		return &proto.VerifyReply{
+			Status: proto.VerifyStatus_FAILED,
+			Reason: proto.FailedReason_INTERNAL_ERR,
 		}, err
 	}
 
 	if store == nil {
-		return &service.VerifyReply{
-			Status: service.VerifyStatus_FAILED,
-			Reason: service.FailedReason_AUTH_FAILED,
+		return &proto.VerifyReply{
+			Status: proto.VerifyStatus_FAILED,
+			Reason: proto.FailedReason_AUTH_FAILED,
 		}, nil
 	}
 
 	if !totp.Validate(request.Code, store.Secret) {
-		return &service.VerifyReply{
-			Status: service.VerifyStatus_FAILED,
-			Reason: service.FailedReason_AUTH_FAILED,
+		return &proto.VerifyReply{
+			Status: proto.VerifyStatus_FAILED,
+			Reason: proto.FailedReason_AUTH_FAILED,
 		}, nil
 	}
 
@@ -94,25 +94,25 @@ func (server *Server) VerifyCode(ctx context.Context, request *service.VerifyReq
 
 	guestInfoJson, err := json.Marshal(request.GuestInfo)
 	if err != nil {
-		return &service.VerifyReply{
-			Status: service.VerifyStatus_FAILED,
-			Reason: service.FailedReason_INTERNAL_ERR,
+		return &proto.VerifyReply{
+			Status: proto.VerifyStatus_FAILED,
+			Reason: proto.FailedReason_INTERNAL_ERR,
 		}, err
 	}
 
 	// send guest information to host for permit
 	subs, err := server.DatabaseChannel.Publish(request.Code, string(guestInfoJson))
 	if err != nil {
-		return &service.VerifyReply{
-			Status: service.VerifyStatus_FAILED,
-			Reason: service.FailedReason_INTERNAL_ERR,
+		return &proto.VerifyReply{
+			Status: proto.VerifyStatus_FAILED,
+			Reason: proto.FailedReason_INTERNAL_ERR,
 		}, err
 	}
 
 	if subs == 0 {
-		return &service.VerifyReply{
-			Status: service.VerifyStatus_FAILED,
-			Reason: service.FailedReason_NO_HOST_WAITED,
+		return &proto.VerifyReply{
+			Status: proto.VerifyStatus_FAILED,
+			Reason: proto.FailedReason_NO_HOST_WAITED,
 		}, nil
 	}
 
@@ -120,31 +120,31 @@ func (server *Server) VerifyCode(ctx context.Context, request *service.VerifyReq
 	for message := range channel {
 		permit, err := strconv.ParseBool(message.Payload)
 		if err != nil {
-			return &service.VerifyReply{
-				Status: service.VerifyStatus_FAILED,
-				Reason: service.FailedReason_INTERNAL_ERR,
+			return &proto.VerifyReply{
+				Status: proto.VerifyStatus_FAILED,
+				Reason: proto.FailedReason_INTERNAL_ERR,
 			}, err
 		}
 		if !permit {
-			return &service.VerifyReply{
-				Status: service.VerifyStatus_FAILED,
-				Reason: service.FailedReason_REJECT_HOST,
+			return &proto.VerifyReply{
+				Status: proto.VerifyStatus_FAILED,
+				Reason: proto.FailedReason_REJECT_HOST,
 			}, nil
 		}
 
-		return &service.VerifyReply{
-			Status: service.VerifyStatus_SUCCESS,
+		return &proto.VerifyReply{
+			Status: proto.VerifyStatus_SUCCESS,
 			Key:    store.Key,
 		}, nil
 	}
 
-	return &service.VerifyReply{
-		Status: service.VerifyStatus_FAILED,
-		Reason: service.FailedReason_RESPONSE_TIMEOUT,
+	return &proto.VerifyReply{
+		Status: proto.VerifyStatus_FAILED,
+		Reason: proto.FailedReason_RESPONSE_TIMEOUT,
 	}, nil
 }
 
-func (server *Server) WaitPermit(permitServer service.KeyLetter_WaitPermitServer) error {
+func (server *Server) WaitPermit(permitServer proto.KeyLetter_WaitPermitServer) error {
 	request, err := permitServer.Recv()
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (server *Server) WaitPermit(permitServer service.KeyLetter_WaitPermitServer
 
 	channel := subscriber.Channel()
 	for message := range channel {
-		var guestInfo *service.GuestInfo
+		var guestInfo *proto.GuestInfo
 		err := json.Unmarshal([]byte(message.Payload), &guestInfo)
 		if err != nil {
 			return err
