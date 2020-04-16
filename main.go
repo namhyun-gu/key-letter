@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 
 	"github.com/go-redis/redis"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
@@ -34,27 +35,10 @@ func main() {
 	config := util.GetConfig()
 	if config == nil {
 		flag.Parse()
-		config = &util.Config{
-			Port: *port,
-			Redis: struct {
-				Addr     string
-				Password string
-			}{
-				Addr:     *redisAddr,
-				Password: *redisPassword,
-			},
-			Opts: struct {
-				Issuer    string
-				Period    uint
-				Digits    int
-				Algorithm string
-			}{
-				Issuer:    *optsIssuer,
-				Period:    *optsPeriod,
-				Digits:    *optsDigits,
-				Algorithm: *optsAlgorithm,
-			},
+		if os.Getenv("USE_ENV") != "" {
+			parseEnv()
 		}
+		config = buildConfig()
 	}
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", config.Port))
 	if err != nil {
@@ -92,4 +76,58 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to serve", err)
 	}
+}
+
+func buildConfig() *util.Config {
+	return &util.Config{
+		Port: *port,
+		Redis: struct {
+			Addr     string
+			Password string
+		}{
+			Addr:     *redisAddr,
+			Password: *redisPassword,
+		},
+		Opts: struct {
+			Issuer    string
+			Period    uint
+			Digits    int
+			Algorithm string
+		}{
+			Issuer:    *optsIssuer,
+			Period:    *optsPeriod,
+			Digits:    *optsDigits,
+			Algorithm: *optsAlgorithm,
+		},
+	}
+}
+
+func parseEnv() {
+	envPort, _ := strconv.Atoi(os.Getenv("PORT"))
+	port = &envPort
+
+	envRedisAddr := os.Getenv("REDIS_ADDR")
+	redisAddr = &envRedisAddr
+
+	envRedisPassword := os.Getenv("REDIS_PASSWORD")
+	redisPassword = &envRedisPassword
+
+	envOptsIssuer := os.Getenv("OPTS_ISSUER")
+	optsIssuer = &envOptsIssuer
+
+	envOptsPeriod := os.Getenv("OPTS_PERIOD")
+	if envOptsPeriod != "" {
+		period, _ := strconv.Atoi(envOptsPeriod)
+		convertPeriod := uint(period)
+		optsPeriod = &convertPeriod
+	}
+
+	envOptsDigits := os.Getenv("OPTS_DIGITS")
+	if envOptsDigits != "" {
+		digits, _ := strconv.Atoi(envOptsDigits)
+		optsDigits = &digits
+	}
+
+	envOptsAlgorithm := os.Getenv("OPTS_ALGORITHM")
+	optsAlgorithm = &envOptsAlgorithm
 }
