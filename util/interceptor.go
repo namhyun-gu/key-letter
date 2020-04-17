@@ -2,6 +2,8 @@ package util
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -31,16 +33,24 @@ var codeToStr = map[codes.Code]string{
 
 func UnaryServerInterceptor(logger grpclog.LoggerV2) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		start := time.Now()
 		resp, err := handler(ctx, req)
-		logger.Infof("Called %s (%s)\n", info.FullMethod, codeToStr[status.Code(err)])
+		logger.Infof("Called /%s (Duration: %s / Code: %s)\n",
+			strings.Split(info.FullMethod, "/")[2],
+			time.Since(start),
+			codeToStr[status.Code(err)])
 		return resp, err
 	}
 }
 
 func StreamServerInterceptor(logger grpclog.LoggerV2) grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		start := time.Now()
 		err := handler(srv, stream)
-		logger.Infof("Called %s[stream] (%s)\n", info.FullMethod, codeToStr[status.Code(err)])
+		logger.Infof("Called /%s (Duration: %s / Code: %s)\n",
+			strings.Split(info.FullMethod, "/")[2],
+			time.Since(start),
+			codeToStr[status.Code(err)])
 		return err
 	}
 }
