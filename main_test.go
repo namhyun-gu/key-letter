@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"github.com/namhyun-gu/key-letter/proto"
 	"testing"
+
+	"github.com/namhyun-gu/key-letter/proto"
 
 	"google.golang.org/grpc"
 )
 
 var (
-	ctx = context.Background()
+	ctx       = context.Background()
 	guestInfo = &proto.GuestInfo{
 		Identifier: "Guest",
 	}

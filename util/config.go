@@ -9,6 +9,8 @@ import (
 
 type Config struct {
 	Port  int
+	CertFile string
+	CertKeyFile string
 	Redis struct {
 		Addr string
 		Password string

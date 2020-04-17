@@ -1,9 +1,11 @@
 syntax = "proto3";
 
-package dev.namhyun.keyletter;
+package dev.namhyun.keyletter.v1;
 
 option go_package = "proto";
-option java_package = "dev.namhyun.keyletter.proto";
+option java_package = "dev.namhyun.keyletter.v1.proto";
+option java_multiple_files = true;
+option java_outer_classname = "KeyLetterProto";
 
 service KeyLetter {
 

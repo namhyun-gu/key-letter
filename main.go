@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 
 	"github.com/go-redis/redis"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/namhyun-gu/key-letter/app"
@@ -20,6 +20,8 @@ import (
 
 var (
 	port          = flag.Int("port", 8000, "Server port")
+	certFilePath = flag.String("cert", "", "Cert file path")
+	keyFilePath = flag.String("cert-key", "", "Cert key file path")
 	redisAddr     = flag.String("redis-addr", "", "Redis endpoint")
 	redisPassword = flag.String("redis-password", "", "Redis password")
 	optsIssuer    = flag.String("opts-issuer", "", "Issuer for generate code")
@@ -35,33 +37,45 @@ func main() {
 	config := util.GetConfig()
 	if config == nil {
 		flag.Parse()
-		if os.Getenv("USE_ENV") != "" {
-			parseEnv()
-		}
 		config = buildConfig()
 	}
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", config.Port))
-	if err != nil {
-		logger.Fatalf("Failed to listen: %v", err)
-	}
-
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     config.Redis.Addr,
 		Password: config.Redis.Password,
 	})
 
-	_, err = redisClient.Ping().Result()
+	_, err := redisClient.Ping().Result()
 	if err != nil {
 		logger.Fatalf("Failed to connect redis: %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc_middleware.WithUnaryServerChain(
+	unaryServerMiddleware := grpc_middleware.WithUnaryServerChain(
 		util.UnaryServerInterceptor(logger),
 		grpc_recovery.UnaryServerInterceptor(),
-	), grpc_middleware.WithStreamServerChain(
+	)
+
+	streamServerMiddleware := grpc_middleware.WithStreamServerChain(
 		util.StreamServerInterceptor(logger),
 		grpc_recovery.StreamServerInterceptor(),
-	))
+	)
+
+	creds, err := credentials.NewServerTLSFromFile(config.CertFile, config.CertKeyFile)
+
+	var grpcServer *grpc.Server
+
+	if creds != nil {
+		logger.Infoln("Enabled SSL/TLS")
+		grpcServer = grpc.NewServer(grpc.Creds(creds), unaryServerMiddleware, streamServerMiddleware)
+	} else {
+		logger.Infoln("Disabled SSL/TLS")
+		grpcServer = grpc.NewServer(unaryServerMiddleware, streamServerMiddleware)
+	}
+
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", config.Port))
+	if err != nil {
+		logger.Fatalf("Failed to listen: %v", err)
+	}
+
 	proto.RegisterKeyLetterServer(grpcServer, &app.Server{
 		Config: config,
 		Database: &app.RedisDatabase{
@@ -71,7 +85,9 @@ func main() {
 			Client: redisClient,
 		},
 	})
-	logger.Infoln("Start to serve")
+
+	logger.Infof("Started to serve (:%d)\n", *port)
+
 	err = grpcServer.Serve(lis)
 	if err != nil {
 		logger.Fatal("Failed to serve", err)
@@ -80,7 +96,9 @@ func main() {
 
 func buildConfig() *util.Config {
 	return &util.Config{
-		Port: *port,
+		Port:        *port,
+		CertFile:    *certFilePath,
+		CertKeyFile: *keyFilePath,
 		Redis: struct {
 			Addr     string
 			Password string
@@ -100,34 +118,4 @@ func buildConfig() *util.Config {
 			Algorithm: *optsAlgorithm,
 		},
 	}
-}
-
-func parseEnv() {
-	envPort, _ := strconv.Atoi(os.Getenv("PORT"))
-	port = &envPort
-
-	envRedisAddr := os.Getenv("REDIS_ADDR")
-	redisAddr = &envRedisAddr
-
-	envRedisPassword := os.Getenv("REDIS_PASSWORD")
-	redisPassword = &envRedisPassword
-
-	envOptsIssuer := os.Getenv("OPTS_ISSUER")
-	optsIssuer = &envOptsIssuer
-
-	envOptsPeriod := os.Getenv("OPTS_PERIOD")
-	if envOptsPeriod != "" {
-		period, _ := strconv.Atoi(envOptsPeriod)
-		convertPeriod := uint(period)
-		optsPeriod = &convertPeriod
-	}
-
-	envOptsDigits := os.Getenv("OPTS_DIGITS")
-	if envOptsDigits != "" {
-		digits, _ := strconv.Atoi(envOptsDigits)
-		optsDigits = &digits
-	}
-
-	envOptsAlgorithm := os.Getenv("OPTS_ALGORITHM")
-	optsAlgorithm = &envOptsAlgorithm
 }
