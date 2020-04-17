@@ -57,17 +57,9 @@ opts:
 go run main.go
 ```
 
-## 키 전달 과정
+## 처리 과정
 
-1. 사용자 A가 키를 서비스에 전송하여 코드를 전달 받습니다.
-
-2. 사용자 A가 받은 코드를 사용자 B에게 전달합니다.
-
-3. 사용자 B는 A로부터 받은 코드로 서비스에 키를 요청합니다.
-
-4. 서비스는 사용자 B의 요청을 받아 사용자 A에게 전달 여부를 확인합니다.
-
-5. 사용자 A가 허용한다면, 서비스가 사용자 B에게 키를 전달합니다.
+![처리 과정](http://www.plantuml.com/plantuml/png/NOv13i8W44NtdE8VG2_0mjHLTQidmFBLfgKe32QzlQ1eckucC-_z-KqK4oIvKHrybEqEPuPNtn4wJvF5m5dLLJuMHgFbn624wBobQXENeiQ9px8gAYxp5rf7xEE01uFh1R6-WNZSYhXgKelyQ36IuYBlyrxZUCKzQnKJsiq_M3LvI6vy0m00)
 
 ## 정보
 
