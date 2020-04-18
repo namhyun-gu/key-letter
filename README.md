@@ -64,6 +64,18 @@ go run main.go
 
 ![처리 과정](http://www.plantuml.com/plantuml/png/NOv13i8W44NtdE8VG2_0mjHLTQidmFBLfgKe32QzlQ1eckucC-_z-KqK4oIvKHrybEqEPuPNtn4wJvF5m5dLLJuMHgFbn624wBobQXENeiQ9px8gAYxp5rf7xEE01uFh1R6-WNZSYhXgKelyQ36IuYBlyrxZUCKzQnKJsiq_M3LvI6vy0m00)
 
+## 예외 처리
+
+
+|Method|Status|Reason|Detail|
+|---|---|---|---|
+|/VerifyCode|SUCCESS|-||
+||FAILED|AUTH_FAILED|코드가 유효하지 않음|
+|||INTERNAL_ERR|내부 오류 발생|
+|||REJECT_HOST|공유 요청이 호스트에 의해 거절됨|
+|||NO_HOST_WAITED|기다리는 호스트가 없음. 공유 상태가 아님|
+|||RESPONSE_TIMEOUT|타임 아웃으로 종료됨|
+
 ## 정보
 
 Namhyun, Gu – namhyun-gu@kakako.com
