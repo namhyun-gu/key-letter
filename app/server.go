@@ -116,6 +116,10 @@ func (server *Server) VerifyCode(ctx context.Context, request *proto.VerifyReque
 		}, nil
 	}
 
+	time.AfterFunc(time.Duration(server.Config.Timeout)*time.Second, func() {
+		subscriber.Close()
+	})
+
 	channel := subscriber.Channel()
 	for message := range channel {
 		permit, err := strconv.ParseBool(message.Payload)
@@ -176,6 +180,7 @@ func (server *Server) WaitPermit(permitServer proto.KeyLetter_WaitPermitServer) 
 		if err != nil {
 			return err
 		}
+		return nil
 	}
 	return nil
 }

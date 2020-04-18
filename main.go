@@ -20,8 +20,9 @@ import (
 
 var (
 	port          = flag.Int("port", 8000, "Server port")
-	certFilePath = flag.String("cert", "", "Cert file path")
-	keyFilePath = flag.String("cert-key", "", "Cert key file path")
+	certFilePath  = flag.String("cert", "", "Cert file path")
+	keyFilePath   = flag.String("cert-key", "", "Cert key file path")
+	timeout       = flag.Uint("timeout", 30, "Code verify session timeout")
 	redisAddr     = flag.String("redis-addr", "", "Redis endpoint")
 	redisPassword = flag.String("redis-password", "", "Redis password")
 	optsIssuer    = flag.String("opts-issuer", "", "Issuer for generate code")
@@ -39,6 +40,7 @@ func main() {
 		flag.Parse()
 		config = buildConfig()
 	}
+
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     config.Redis.Addr,
 		Password: config.Redis.Password,
@@ -99,6 +101,7 @@ func buildConfig() *util.Config {
 		Port:        *port,
 		CertFile:    *certFilePath,
 		CertKeyFile: *keyFilePath,
+		Timeout: *timeout,
 		Redis: struct {
 			Addr     string
 			Password string

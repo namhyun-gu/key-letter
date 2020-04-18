@@ -11,6 +11,7 @@ type Config struct {
 	Port  int
 	CertFile string
 	CertKeyFile string
+	Timeout uint
 	Redis struct {
 		Addr string
 		Password string
@@ -39,6 +40,13 @@ func GetConfig() *Config {
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
 		return nil
+	}
+
+	if config.Timeout == 0 {
+		config.Timeout = 30
+	}
+	if config.Port == 0 {
+		config.Port = 8000
 	}
 	return &config
 }

@@ -41,7 +41,8 @@ go get -u
 ```yaml
 port: *(서비스 포트)
 certfile: (SSL/TLS 이용 시 *.crt 파일 경로)
-certkeyfile: (SSL/TLS 이용 시 *.pem 파일 경로) 
+certkeyfile: (SSL/TLS 이용 시 *.pem / *.key 파일 경로)
+timeout: (서비스 타임아웃. 기본 30초)
 redis:
   addr: *(Redis 주소)
   password: *(Redis 비밀번호)
